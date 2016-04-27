@@ -5,13 +5,17 @@ import socket
 import re
 
 class crazy_hv_unit():
-	""" Send and recieve commands from FSC HV Control Unit.
+	""" Send and receive commands from FSC HV Control Unit.
 	Version 1.0 (a metal box, 64 channels).
 	
 	Send a command to HV Control Unit.
-	Get decoded responce.
+	Get a raw text responce with .cmd().
+	Get a decoded responce with .v() and other functions.
 	"""
-	def __init__(self, host = '172.22.60.202', port = 2217, timeout = 1.0):
+	DEFAULT_HOST = '172.22.60.202'
+	DEFAULT_PORT = 2217
+	
+	def __init__(self, host = DEFAULT_HOST, port = DEFAULT_PORT, timeout = 1.0):
 		addr = (host, int(port))
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sock.settimeout(timeout)
