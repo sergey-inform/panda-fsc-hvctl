@@ -4,7 +4,7 @@ import time
 import socket
 import re
 
-class crazy_hv_unit():
+class hvctl:
 	""" Send and receive commands from FSC HV Control Unit.
 	Version 1.0 (a metal box, 64 channels).
 	
@@ -77,7 +77,7 @@ class crazy_hv_unit():
 
 def main():
 	import sys
-	unit = crazy_hv_unit()
+	unit = hvctl()
 	cmdline = ' '.join(sys.argv[1:])
 	print( unit.cmd(cmdline))
 
