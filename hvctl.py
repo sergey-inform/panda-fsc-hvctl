@@ -4,7 +4,7 @@ import time
 import socket
 import re
 
-class hvctl:
+class hv_unit_v1():
 	""" Send and receive commands from FSC HV Control Unit.
 	Version 1.0 (a metal box, 64 channels).
 	
@@ -77,7 +77,7 @@ class hvctl:
 
 def main():
 	import sys
-	unit = hvctl()
+	unit = hv_unit_v1()
 	cmdline = ' '.join(sys.argv[1:])
 	print( unit.cmd(cmdline))
 
