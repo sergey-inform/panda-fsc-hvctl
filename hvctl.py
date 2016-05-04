@@ -6,7 +6,7 @@ import re
 
 class hv_unit_v1():
 	""" Send and receive commands from FSC HV Control Unit.
-	Version 1.0 (a metal box, 64 channels).
+	Version 4.0 (a metal box, 64 channels).
 	
 	Send a command to HV Control Unit.
 	Get a raw text responce with .cmd().
@@ -19,9 +19,13 @@ class hv_unit_v1():
 		addr = (host, int(port))
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sock.settimeout(timeout)
-		sock.connect(addr)
+		
+		try:
+			sock.connect(addr)
 			
-		#TODO: except
+		except socket.timeout:
+			raise IOError("connection is timed out")
+			
 		self.sock = sock
 	
 	def cmd(self, command):
@@ -39,22 +43,34 @@ class hv_unit_v1():
 		resp = self.cmd('v')
 		
 		# HVPS    0 V,  I(hv)    0 mA, I(+6)   65 mA, I(-6)   41 mA
+		pattern = "HVPS{space}{digit} V,  I\(hv\){space}{digit} mA, I\(\+6\){space}{digit} mA, I\(-6\){space}{digit} mA"
+		values = self._parse_resp(pattern, resp)
+		
+		return dict(zip(['V', 'Ihv', 'I6_pos', 'I6_neg'], values))
+	
+	def _parse_resp(self, pattern, string):
+		""" Parse a responce string according to pattern.
+			Return a list of field values 
+			or raise an IOError if responce doesn't match pattern.
+		"""
 		fields = {
 			'digit': '(\d+)',
 			'fdigit': '(d+(?:\.\d+)?)', #floating point
 			'space': '\s+',
 			}
-		pattern = "HVPS{space}{digit} V,  I\(hv\){space}{digit} mA, I\(\+6\){space}{digit} mA, I\(-6\){space}{digit} mA\s*"
+		
 		pattern = pattern.format(**fields)
+		pattern += "\s*" #any number of space in the end 
 		
-		mo = re.match(pattern, resp)
+		mo = re.match(pattern, string)
 		if not mo:
-			raise IOError("misformatted responce: %s (format: '%s')" % (repr(resp), pattern))
+			raise IOError("wrong responce: %s (format: '%s')" % (repr(string), pattern))
+			
+		return mo.groups()
 		
-		return dict(zip(['V', 'Ihv', 'I6_pos', 'I6_neg'], mo.groups()))
 		
 	def _readout(self):
-		""" Get a responce. """
+		""" Get a responce from unit. """
 		resp = ""
 		LITTER = '\xff\xfb\x01\xff\xfb\x03\xff\xfd\x00\xff\xfb,'
 		while True:
@@ -73,8 +89,41 @@ class hv_unit_v1():
 		resp = resp.translate(None, '\x00') #replace non-ASCII 
 		resp = resp.replace("\n\r", "\n") #replace misused \n\r
 		return resp
-
-
+		
+		
+	### Sort of API for on/off/set functions.
+	
+	def set(self, chan, code):
+		""" Set HV channel DAC to value """
+		resp = self.cmd('c %d %d' % (chan, code))
+		
+		#resp: chan 99, code 100 <- HV setup
+		pattern = "chan{space}{digit}, code{space}{digit} <- HV setup"
+		resp_chan, resp_code = self._parse_resp(pattern, resp)
+		
+		if int(resp_chan) != chan or int(resp_code) != code:
+			raise IOError("Channel or code in responce not the same as in request (%d %d): '%s'" %
+					(chan, code, resp) )
+		return
+	
+	def off(self):
+		""" Turn HV off """
+		resp = self.cmd('o0')
+		pattern = "Turn OFF HV Power supply"
+		self._parse_resp(pattern, resp)
+		return
+	
+	def on(self): 
+		""" Turn HV on """
+		resp = self.cmd('o1')
+		pattern = "Turn ON HV Power supply"
+		self._parse_resp(pattern, resp)
+		return
+		
+	###
+	
+	
+	
 def main():
 	import sys
 	unit = hv_unit_v1()
