@@ -126,7 +126,7 @@ class HVUnit():
 	
 def main():
 	import sys
-	unit = hv_unit_v1()
+	unit = HVUnit()
 	cmdline = ' '.join(sys.argv[1:])
 	print( unit.cmd(cmdline))
 
