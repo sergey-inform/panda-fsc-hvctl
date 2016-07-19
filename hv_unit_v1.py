@@ -4,7 +4,7 @@ import time
 import socket
 import re
 
-class hv_unit_v1():
+class HVUnit():
 	""" Send and receive commands from FSC HV Control Unit.
 	Version 4.0 (a metal box, 64 channels).
 	
