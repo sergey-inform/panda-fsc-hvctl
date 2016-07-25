@@ -46,7 +46,7 @@ class HVUnit():
 		pattern = "HVPS{space}{digit} V,  I\(hv\){space}{digit} mA, I\(\+6\){space}{digit} mA, I\(-6\){space}{digit} mA"
 		values = self._parse_resp(pattern, resp)
 		
-		return dict(zip(['V', 'Ihv', 'I6_pos', 'I6_neg'], values))
+		return dict(zip(['V', 'Ihv', 'I6V_pos', 'I6V_neg'], values))
 	
 	def _parse_resp(self, pattern, string):
 		""" Parse a responce string according to pattern.
